@@ -1,17 +1,18 @@
 # rust-frp-client
-frp client implemented with rust language
 
-## frp protocol
+用rust语言实现的frp客户端
 
-## sequence diagram
+## frp协议详解
+
+将frp协议分为两个阶段： 连接阶段，服务阶段
+
+## 连接阶段
 
 ```mermaid
 sequenceDiagram
-	title:	frp客户端与frp服务端通信交互时序图
-	participant l_svc as 本地局域网应用服务
-	participant frpc as frp 客户端
-  participant frps as frp 服务端
-  participant user as 互联网远程访问用户
+	title:	连接阶段
+	participant frpc as frp客户端
+  participant frps as frp服务端
   
   frpc ->> frps  : TypeLogin Message
   frps ->> frpc  : TypeLoginResp Message
@@ -35,6 +36,17 @@ sequenceDiagram
     frpc -->> frps : TypePing Message
     frps -->> frpc : TypePong Message
   end
+```
+
+## 服务阶段
+
+```mermaid
+sequenceDiagram
+	title:	 服务阶段
+	participant l_svc as 本地局域网应用服务
+	participant frpc as frp客户端
+  participant frps as frp服务端
+  actor user as 互联网远程访问用户
   
   user ->> frps  : 发起访问
   frps ->> frpc	 : TypeStartWorkconn Message
@@ -47,4 +59,3 @@ sequenceDiagram
   end
   
 ```
-
