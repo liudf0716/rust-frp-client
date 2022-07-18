@@ -43,19 +43,23 @@ sequenceDiagram
 ```mermaid
 sequenceDiagram
 	title:	 服务阶段
-	participant l_svc as 本地局域网应用服务
+	actor l_svc as 本地局域网应用服务
 	participant frpc as frp客户端
   participant frps as frp服务端
   actor user as 互联网远程访问用户
   
-  user ->> frps  : 发起访问
-  frps ->> frpc	 : TypeStartWorkconn Message
+  user ->> frps : 发起访问
+  frps ->> frpc	: TypeStartWorkconn Message
+	frpc -> l_svc	: frp客户端与本地局域网应用服务创立连接
   loop  远程访问用户与本地服务之间的交互过程
-    frps ->> frpc   : 用户数据
-    frpc ->> l_svc  : 用户数据
-    l_svc ->> frpc  : 本地服务数据
-    frpc ->> frps   : 本地服务数据
-    frps  ->> user  : 本地服务数据
+		user ->> frps 	: 用户访问数据
+    frps ->> frpc   : 用户访问数据
+    frpc ->> l_svc  : 用户访问数据
+    l_svc ->> frpc  : 本地服务返回数据
+    frpc ->> frps   : 本地服务返回数据
+    frps  ->> user  : 本地服务返回数据
   end
-  
+  user ->> frps		: 断开访问服务
+	frps ->> frpc 	: 断开访问服务
+	frpc -x l_svc 	: 断开frp客户端与本地局域网应用服务的连接
 ```
