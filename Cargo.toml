@@ -1,0 +1,30 @@
+[package]
+name = "rust-frp-client"
+version = "0.1.0"
+authors = ["DengfengLiu <liu_df@qq.com>"]
+edition = "2021"
+description = "fast reverse proxy client"
+license = "GPLV3"
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[[bin]]
+name = "rust-frp-client"
+path = "bin/main.rs"
+
+[dependencies]
+yamux = { git = "https://github.com/liudf0716/rust-yamux.git", version = "0.10.1" }
+serde_json = "1.0"
+serde = { version = "1.0", features = ["derive"] }
+clap = { version = "3.2.14", features = ["derive"] }
+rust-ini = "0.18.0"
+log = "0.4.17"
+tokio = { version = "1.20.0", features = ["full"] }
+md5 = "0.7.0"
+anyhow = "1.0.58"
+chrono = "0.4.19"
+tokio-util = { version = "0.7.3", features = ["compat"] }
+futures-util = "0.3.21"
+futures = { version = "0.3.12", default-features = false, features = ["std"] }
+ring = "0.16.20"
+aes = "0.8.1"
+cfb-mode = "0.8.1"
