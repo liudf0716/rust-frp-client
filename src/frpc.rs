@@ -30,7 +30,7 @@ async fn start_service(config: Config) -> Result<()> {
 
 pub fn main(matches: &ArgMatches) -> ExitCode {
     let config_file = matches.value_of("config").unwrap();
-    let client_config = Config::new();
+    let mut client_config = Config::new();
     client_config.load_config(config_file);
 
     start_service(client_config);

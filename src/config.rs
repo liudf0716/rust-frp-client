@@ -99,7 +99,7 @@ impl Config {
     }
     
     pub fn server_addr(&self) -> String {
-        self.common.server_addr
+        self.common.server_addr.clone()
     }
 
     pub fn server_port(&self) -> u16 {
@@ -107,7 +107,7 @@ impl Config {
     }
 
     pub fn auth_token(&self) -> String {
-        self.common.token
+        self.common.token.clone()
     }
 
     fn parse_common_config(&mut self, name: &str, prop: &Properties) -> Result<()> {

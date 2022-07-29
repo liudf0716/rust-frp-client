@@ -42,7 +42,7 @@ impl Service {
 
     pub async fn run(&mut self) -> Result<()> {
         let login = Login::new(&self.cfg);
-        let login_resp = login.send_msg(&self.main_stream).await.unwrap();
+        let login_resp = login.send_msg(&mut self.main_stream).await.unwrap();
         if login_resp.error().is_empty() {
             println!("app exit {}", login_resp.error());
             process::exit(1);
