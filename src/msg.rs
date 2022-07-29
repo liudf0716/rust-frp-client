@@ -72,11 +72,11 @@ impl Login {
 
 impl LoginResp {
     pub fn run_id(&self) -> String {
-        self.run_id
+        self.run_id.clone()
     }
 
     pub fn error(&self) -> String {
-        self.error
+        self.error.clone()
     }
 }
 
