@@ -7,7 +7,9 @@
 将frp协议分为两个阶段： 连接阶段，服务阶段
 
 ## 连接阶段
-
+ 
+ **实线代表明文，虚线代表密文，默认只有控制连接加密，工作连接不加密**
+ 
 ```mermaid
 sequenceDiagram
 	title:	连接阶段
@@ -18,13 +20,11 @@ sequenceDiagram
   frps ->> frpc  : TypeLoginResp Message
   Note right of frps  : 根据Login信息里面的pool值，决定给xfrpc发送几条TypeReqWorkConn请求信息
   frps ->> frpc  : frps aes-128-cfb iv[16] data
-  frps -->> frpc : TypeReqWorkConn Message
 	loop 根据Login中的PoolCount创建工作连接数
-  	frpc -->> frps  : TypeNewWorkConn Message
+		frps -->> frpc : TypeReqWorkConn Message
+  	frpc ->> frps  : TypeNewWorkConn Message
   	Note left of frpc  : 与服务器创建代理服务工作连接，并请求新的工作连接请求
   	Note right of frps  : 处理xfrpc端发送的TypeNewWorkConn消息，注册该工作连接到连接池中
-  	frps ->> frpc  : TypeStartWorkConn Message
-  	Note left of frpc  : 将新创建的工作连接与代理的本地服务连接做绑定
 	end
   frpc ->> frps  : xfrpc aes-128-cfb iv[16] data
   loop 用户配置的代理服务数
