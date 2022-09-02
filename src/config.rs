@@ -3,7 +3,7 @@ use ini::{Ini, Properties};
 use anyhow::Result;
 
 #[derive(Debug, Clone)]
-struct ClientCommonConfig {
+pub struct ClientCommonConfig {
     server_addr:    String,
     server_port:    u16,
     pool_count:     u32,
@@ -28,11 +28,11 @@ impl ClientCommonConfig {
 }
 
 #[derive(Debug, Clone)]
-struct ClientTcpConfig {
-    service_type:   String,
+pub struct ClientTcpConfig {
+    pub service_type:   String,
     local_ip:       String,
     local_port:     u16,
-    remote_port:    u16,
+    pub remote_port:    u16,
 }
 
 impl ClientTcpConfig {
@@ -47,11 +47,12 @@ impl ClientTcpConfig {
 }
 
 #[derive(Debug, Clone)]
-struct ClientWebConfig {
-    service_type:   String,
+pub struct ClientWebConfig {
+    pub service_type:   String,
     local_ip:       String,
     local_port:     u16,
-    custom_domains: String,
+    pub custom_domains: Option<String>,
+    pub subdomain:      Option<String>,
 }
 
 impl ClientWebConfig {
@@ -60,16 +61,25 @@ impl ClientWebConfig {
             service_type: stype,
             local_ip: "127.0.0.1".to_string(),
             local_port: 0,
-            custom_domains: "".to_string()
+            custom_domains: None,
+            subdomain: None,
         }
+    }
+
+    pub fn check(&self) -> bool {
+        if self.custom_domains.is_none() && self.subdomain.is_none() {
+            return false;
+        }
+
+        return true;
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct Config {
     common:         ClientCommonConfig,
-    tcp_configs:    HashMap<String, ClientTcpConfig>,
-    web_configs:    HashMap<String, ClientWebConfig>,
+    pub tcp_configs:    HashMap<String, ClientTcpConfig>,
+    pub web_configs:    HashMap<String, ClientWebConfig>,
 }
 
 impl Config {
@@ -85,7 +95,7 @@ impl Config {
         }
     }
 
-    pub fn load_config(&mut self, config_file: &str) -> Result<()>{
+    pub fn load_config(&mut self, config_file: &str) -> Result<()> {
         let i = Ini::load_from_file(config_file).unwrap();
         for (sec, prop) in i.iter() {
             if "common".eq(sec.unwrap()) {
@@ -121,6 +131,7 @@ impl Config {
                 "tcp_mux" => if v.eq(&"false".to_string()) { 
                     self.common.tcp_mux = false
                 },
+                "pool_count" => self.common.pool_count = v.parse::<u32>().unwrap(),
                 _ => println!("dont support {}", k),
             }
         };
@@ -154,7 +165,8 @@ impl Config {
                 match k {
                     "local_ip" => web_proxy_config.local_ip = v.to_string(),
                     "local_port" => web_proxy_config.local_port = v.parse::<u16>().unwrap(),
-                    "custom_domains" => web_proxy_config.custom_domains = v.to_string(),
+                    "custom_domains" => web_proxy_config.custom_domains = Some(v.to_string()),
+                    "subdomain" => web_proxy_config.subdomain = Some(v.to_string()),
                     "type" => (),
                     _ => println!("invalid key {}", k),
                 }

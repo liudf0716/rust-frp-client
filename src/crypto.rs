@@ -40,6 +40,10 @@ impl FrpCoder {
         &self.key
     }
 
+    pub fn iv(&self) -> &[u8; 16] {
+        &self.iv
+    }
+
     pub fn encypt(&mut self, buf: &mut Vec<u8>) -> Result<()> {
         let enc = self.enc.clone();
         enc.encrypt(buf);

@@ -64,5 +64,9 @@ impl Service {
 
         Ok(())
     }
+
+    pub fn get_conf(&self) -> &Config {
+        &self.cfg
+    }
 }
 

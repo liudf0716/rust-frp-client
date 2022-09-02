@@ -116,6 +116,7 @@ impl ReqWorkConn {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug)]
 pub struct NewWorkConn {
     run_id:         String,
     privilege_key:  String,
@@ -123,6 +124,7 @@ pub struct NewWorkConn {
 }
 
 impl NewWorkConn {
+    
     pub fn new(run_id: String, cfg: &Config) -> Self {
         let timestamp = Utc::now().timestamp();
         let privilege_key = get_privilege_key(timestamp, cfg.auth_token());
@@ -133,6 +135,65 @@ impl NewWorkConn {
             timestamp,
         }
     }
+    
+    fn to_string(&self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct NewProxy {
+    proxy_name:     String,
+    proxy_type:     String,
+     #[serde(skip_serializing_if = "Option::is_none")]
+    remote_port:    Option<u16>,
+     #[serde(skip_serializing_if = "Option::is_none")]
+    custom_domains: Option<Vec<String>>,
+     #[serde(skip_serializing_if = "Option::is_none")]
+    subdomain:      Option<String>,
+}
+
+impl NewProxy {
+    
+    pub fn new(proxy_name: &str, proxy_type: &str) -> Self {
+
+        Self {
+            proxy_name: proxy_name.to_string(),
+            proxy_type: proxy_type.to_string(),
+            remote_port:    None,
+            custom_domains: None,
+            subdomain:      None,
+        }
+    }
+
+    pub fn set_remote_port(&mut self, remote_port: u16) {
+        self.remote_port = Some(remote_port)
+    }
+    
+    pub fn set_custom_domains(&mut self, custom_domains: &Vec<String>) {
+        self.custom_domains = Some(custom_domains.clone())
+    }
+
+    pub fn set_subdomain(&mut self, subdomain: &str) {
+        self.subdomain = Some(subdomain.to_string())
+    }
+    
+    pub fn send_msg(&self, main_stream: &mut Stream) -> Result<()> {
+        
+        Ok(())
+    }
+
+    fn to_string(&self) -> String {
+        serde_json::to_string(&self).unwrap()
+    }
+
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct NewProxyResp {
+    proxy_name:  String,
+    remote_addr: String,
+    error:       String,
 }
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
