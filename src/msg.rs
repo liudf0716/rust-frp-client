@@ -1,7 +1,10 @@
 
-use std::collections::HashMap;
 use serde::{Serialize, Deserialize};
-use std::env::consts;
+use std::{
+    env::consts,
+    mem::size_of,
+    collections::HashMap,
+};
 use anyhow::Result;
 use md5;
 use chrono::Utc;
@@ -54,7 +57,6 @@ impl Login {
 
     pub async fn send_msg(&self, main_stream: &mut Stream) -> Result<LoginResp> {
         let frame = self.to_string().into_bytes();
-        println!("login msg {}", self.to_string());
         let hdr = MsgHeader::new(TypeLogin, frame.len() as u64); 
         main_stream.write_all(&msg_header_encode(&hdr).to_vec()).await?;
         main_stream.write_all(&frame).await?;
@@ -62,7 +64,6 @@ impl Login {
         let mut msg_hdr = [0; MSG_HEADER_SIZE];
         main_stream.read_exact(&mut msg_hdr).await?;
         let header: MsgHeader = msg_header_decode(&msg_hdr.try_into().unwrap());
-        println!("header {:?}", header);
         let mut msg = vec![0; header.len as usize]; 
         main_stream.read_exact(&mut msg).await?;
         let resp = String::from_utf8_lossy(&msg);
@@ -178,8 +179,17 @@ impl NewProxy {
         self.subdomain = Some(subdomain.to_string())
     }
     
-    pub fn send_msg(&self, main_stream: &mut Stream) -> Result<()> {
-        
+    pub async fn send_msg(&self, main_stream: &mut Stream, encoder: &mut FrpCoder) -> Result<()> {
+        let frame = self.to_string().into_bytes();
+        let cap = frame.len() + size_of::<MsgHeader>();
+        let mut data: Vec<u8> = vec![0; cap];
+        data[0] = TypeNewProxy.0;
+        data[1..MSG_HEADER_SIZE].copy_from_slice(&frame.len().to_be_bytes());
+        data[MSG_HEADER_SIZE..].copy_from_slice(&frame);
+
+        encoder.encypt(&mut data);
+        main_stream.write_all(&data).await?;
+
         Ok(())
     }
 

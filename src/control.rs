@@ -54,7 +54,7 @@ impl Control {
             let header: MsgHeader = msg_header_decode(&hdr);
             assert_eq!(header.len as usize, n - MSG_HEADER_SIZE);
             println!("header {:?}", header);
-            self.handle_msg(&header, &plain_msg[MSG_HEADER_SIZE..n]).await?;
+            self.handle_msg(&header, &plain_msg[MSG_HEADER_SIZE..n]);
             
             self.send_proxy_conf(main_stream);
         }
@@ -62,7 +62,16 @@ impl Control {
 
     pub async fn handle_msg(&mut self, header: &MsgHeader, msg: &[u8]) -> Result<()> {
         match header.msg_type {
-           TypeReqWorkConn => self.handle_req_work_conn().await,
+           TypeReqWorkConn => {
+               self.handle_req_work_conn();
+
+               Ok(())
+           },
+           TypeNewProxyResp => { 
+               println!("new proxy response");
+               
+               Ok(())
+           },
            _ => Err(anyhow::anyhow!("unsupported type {:?}", header)),
         }
     }
@@ -70,22 +79,25 @@ impl Control {
     pub async fn handle_req_work_conn(&mut self) -> Result<()> {
         let work_conn = NewWorkConn::new(self.service.run_id.clone(), &self.service.cfg); 
         let mut work_stream = self.service.main_ctl.open_stream().await.unwrap();
+        println!("handle req work connection");
 
         Ok(())
     }
 
     pub async fn send_proxy_conf(&mut self, main_stream: &mut Stream) -> Result<()> {
         if self.send_proxy {
+            println!("already send proxy conf");
             return Ok(());
         }
-        
+
+        println!("send proxy conf");
         let iv = self.coder.iv();
         main_stream.write_all(iv).await?;
 
         let cfg = self.service.get_conf();
         self.send_tcp_proxy_conf(main_stream, &cfg.tcp_configs);
         self.send_web_proxy_conf(main_stream, &cfg.web_configs);
-
+        
         self.send_proxy = true;
 
         Ok(())
@@ -100,7 +112,8 @@ impl Control {
         for (proxy_name, tcp_config) in configs {
             let mut new_proxy = NewProxy::new(&proxy_name, &tcp_config.service_type);
             new_proxy.set_remote_port(tcp_config.remote_port);
-            new_proxy.send_msg(main_stream);
+            let mut encoder = self.coder.clone();
+            new_proxy.send_msg(main_stream, &mut encoder);
         }
 
         Ok(())
@@ -124,7 +137,8 @@ impl Control {
                 new_proxy.set_subdomain(web_config.subdomain.as_ref().unwrap());
             }
             
-            new_proxy.send_msg(main_stream);
+            let mut encoder = self.coder.clone();
+            new_proxy.send_msg(main_stream, &mut encoder);
         }
 
         Ok(())
