@@ -54,18 +54,16 @@ impl Control {
             let header: MsgHeader = msg_header_decode(&hdr);
             assert_eq!(header.len as usize, n - MSG_HEADER_SIZE);
             println!("header {:?}", header);
-            self.handle_msg(&header, &plain_msg[MSG_HEADER_SIZE..n]);
+            self.handle_msg(&header, &plain_msg[MSG_HEADER_SIZE..n]).await;
             
-            self.send_proxy_conf(main_stream);
+            self.send_proxy_conf(main_stream).await;
         }
     }
 
     pub async fn handle_msg(&mut self, header: &MsgHeader, msg: &[u8]) -> Result<()> {
         match header.msg_type {
            TypeReqWorkConn => {
-               self.handle_req_work_conn();
-
-               Ok(())
+                self.handle_req_work_conn().await
            },
            TypeNewProxyResp => { 
                println!("new proxy response");
