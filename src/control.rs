@@ -32,7 +32,7 @@ impl Control {
 
     pub fn new(service: Service, iv: [u8; 16]) -> Self {
         
-        let mut coder = FrpCoder::new(service.cfg.auth_token().to_string(), iv);
+        let mut coder = FrpCoder::new(service.cfg.auth_token(), iv);
 
         Self {
             coder,
@@ -49,7 +49,9 @@ impl Control {
             assert_eq!((n < 4096), true);
             println!("read msg length {}", n);
             let mut plain_msg = buf[0..n].to_vec();
-            self.coder.clone().decrypt(&mut plain_msg);
+            //self.coder.clone().decrypt(&mut plain_msg);
+            self.coder.decrypt(&mut plain_msg);
+            println!("plain_msg {:?}", plain_msg);
             let hdr: [u8; MSG_HEADER_SIZE] = plain_msg[0..MSG_HEADER_SIZE].try_into().expect("slice with incorrect length");
             let header: MsgHeader = msg_header_decode(&hdr);
             assert_eq!(header.len as usize, n - MSG_HEADER_SIZE);
@@ -92,9 +94,9 @@ impl Control {
         let iv = self.coder.iv();
         main_stream.write_all(iv).await?;
 
-        let cfg = self.service.get_conf();
-        self.send_tcp_proxy_conf(main_stream, &cfg.tcp_configs);
-        self.send_web_proxy_conf(main_stream, &cfg.web_configs);
+        let mut cfg = self.service.get_conf().clone();
+        self.send_tcp_proxy_conf(main_stream, &cfg.tcp_configs).await?;
+        self.send_web_proxy_conf(main_stream, &cfg.web_configs).await?;
         
         self.send_proxy = true;
 
@@ -102,7 +104,7 @@ impl Control {
     }
 
     async fn send_tcp_proxy_conf(
-        &self, 
+        &mut self, 
         main_stream: &mut Stream, 
         configs:     &HashMap<String, ClientTcpConfig>
     ) -> Result<()> {
@@ -110,15 +112,14 @@ impl Control {
         for (proxy_name, tcp_config) in configs {
             let mut new_proxy = NewProxy::new(&proxy_name, &tcp_config.service_type);
             new_proxy.set_remote_port(tcp_config.remote_port);
-            let mut encoder = self.coder.clone();
-            new_proxy.send_msg(main_stream, &mut encoder);
+            new_proxy.send_msg(main_stream, &mut self.coder).await?;
         }
 
         Ok(())
     }
 
     async fn send_web_proxy_conf(
-        &self, 
+        &mut self, 
         main_stream: &mut Stream, 
         configs:     &HashMap<String, ClientWebConfig>
     ) -> Result<()> {
@@ -135,8 +136,7 @@ impl Control {
                 new_proxy.set_subdomain(web_config.subdomain.as_ref().unwrap());
             }
             
-            let mut encoder = self.coder.clone();
-            new_proxy.send_msg(main_stream, &mut encoder);
+            new_proxy.send_msg(main_stream, &mut self.coder).await?;
         }
 
         Ok(())

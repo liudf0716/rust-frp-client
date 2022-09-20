@@ -27,4 +27,4 @@ futures-util = "0.3.21"
 futures = { version = "0.3.12", default-features = false, features = ["std"] }
 ring = "0.16.20"
 aes = "0.8.1"
-cfb-mode = "0.8.1"
+cfb-mode = "0.8.2"

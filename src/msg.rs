@@ -181,7 +181,7 @@ impl NewProxy {
     
     pub async fn send_msg(&self, main_stream: &mut Stream, encoder: &mut FrpCoder) -> Result<()> {
         let frame = self.to_string().into_bytes();
-        let cap = frame.len() + size_of::<MsgHeader>();
+        let cap = frame.len() + MSG_HEADER_SIZE;
         let mut data: Vec<u8> = vec![0; cap];
         data[0] = TypeNewProxy.0;
         data[1..MSG_HEADER_SIZE].copy_from_slice(&frame.len().to_be_bytes());
