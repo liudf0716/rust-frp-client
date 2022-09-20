@@ -48,7 +48,6 @@ impl FrpCoder {
 
     pub fn encypt(&mut self, buf: &mut Vec<u8>) -> Result<()> {
         let (iv, pos) = self.enc.get_state();
-        println!("encrypt {pos} {:?}", iv);
         let cipher = Aes128::new_from_slice(self.key()).unwrap();
         self.enc = Aes128CfbEnc::from_state(cipher, iv, pos);
 
@@ -59,7 +58,6 @@ impl FrpCoder {
 
     pub fn decrypt(&mut self, buf: &mut Vec<u8>) -> Result<()> {
         let (iv, pos) = self.dec.get_state();
-        println!("decrypt {pos} {:?}", iv);
         let cipher = Aes128::new_from_slice(self.key()).unwrap();
         self.dec = Aes128CfbDec::from_state(cipher, iv, pos);
 

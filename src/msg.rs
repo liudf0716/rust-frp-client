@@ -137,9 +137,18 @@ impl NewWorkConn {
         }
     }
     
-    fn to_string(&self) -> String {
+    pub fn to_string(&self) -> String {
         serde_json::to_string(&self).unwrap()
     }
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct StartWorkConn {
+    pub proxy_name: String,
+    src_addr:   String,
+    dst_addr:   String,
+    src_port:   u16,
+    dst_port:   u16,
 }
 
 #[derive(Serialize, Deserialize, Debug)]

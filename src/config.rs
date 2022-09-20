@@ -1,6 +1,13 @@
 use std::collections::HashMap;
 use ini::{Ini, Properties};
-use anyhow::Result;
+use anyhow::{anyhow, Result};
+
+#[derive(Debug, Clone)]
+pub struct Proxy {
+    pub server_addr:    String,
+    pub server_port:    u16,
+    pub proxy_type:     String,
+}
 
 #[derive(Debug, Clone)]
 pub struct ClientCommonConfig {
@@ -118,6 +125,28 @@ impl Config {
 
     pub fn auth_token(&self) -> &str {
         &self.common.token
+    }
+    
+    pub fn get_proxy(&self, proxy_name: &str) -> Result<Proxy> {
+        if self.tcp_configs.contains_key(proxy_name) {
+            let config = self.tcp_configs.get(proxy_name).unwrap();
+
+            Ok(Proxy {
+                server_addr: config.local_ip.clone(),
+                server_port: config.local_port,
+                proxy_type:  "tcp".to_string(),
+            })
+        } else  if self.web_configs.contains_key(proxy_name) {
+            let config = self.web_configs.get(proxy_name).unwrap();
+
+            Ok(Proxy {
+                server_addr: config.local_ip.clone(),
+                server_port: config.local_port,
+                proxy_type:  "web".to_string(),
+            })
+        } else {
+            Err(anyhow!("no such proxy"))
+        }
     }
 
     fn parse_common_config(&mut self, name: &str, prop: &Properties) -> Result<()> {
