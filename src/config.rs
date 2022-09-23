@@ -1,23 +1,23 @@
-use std::collections::HashMap;
-use ini::{Ini, Properties};
 use anyhow::{anyhow, Result};
+use ini::{Ini, Properties};
+use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Proxy {
-    pub server_addr:    String,
-    pub server_port:    u16,
-    pub proxy_type:     String,
+    pub server_addr: String,
+    pub server_port: u16,
+    pub proxy_type: String,
 }
 
 #[derive(Debug, Clone)]
 pub struct ClientCommonConfig {
-    server_addr:    String,
-    server_port:    u16,
-    pool_count:     u32,
-    tcp_mux:        bool,
-    token:          String,
+    server_addr: String,
+    server_port: u16,
+    pool_count: u32,
+    tcp_mux: bool,
+    token: String,
     heartbeat_interval: u32,
-    heartbeat_timeout:  u32,
+    heartbeat_timeout: u32,
 }
 
 impl ClientCommonConfig {
@@ -26,20 +26,20 @@ impl ClientCommonConfig {
             server_addr: "0.0.0.0".to_string(),
             server_port: 7000,
             pool_count: 1,
-            tcp_mux:    true,
-            token:      "".to_string(),
+            tcp_mux: true,
+            token: "".to_string(),
             heartbeat_interval: 30,
-            heartbeat_timeout:  90,
+            heartbeat_timeout: 90,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ClientTcpConfig {
-    pub service_type:   String,
-    local_ip:       String,
-    local_port:     u16,
-    pub remote_port:    u16,
+    pub service_type: String,
+    local_ip: String,
+    local_port: u16,
+    pub remote_port: u16,
 }
 
 impl ClientTcpConfig {
@@ -48,18 +48,18 @@ impl ClientTcpConfig {
             service_type: "tcp".to_string(),
             local_ip: "127.0.0.1".to_string(),
             local_port: 0,
-            remote_port: 0
+            remote_port: 0,
         }
     }
 }
 
 #[derive(Debug, Clone)]
 pub struct ClientWebConfig {
-    pub service_type:   String,
-    local_ip:       String,
-    local_port:     u16,
+    pub service_type: String,
+    local_ip: String,
+    local_port: u16,
     pub custom_domains: Option<String>,
-    pub subdomain:      Option<String>,
+    pub subdomain: Option<String>,
 }
 
 impl ClientWebConfig {
@@ -84,14 +84,14 @@ impl ClientWebConfig {
 
 #[derive(Debug, Clone)]
 pub struct Config {
-    common:         ClientCommonConfig,
-    pub tcp_configs:    HashMap<String, ClientTcpConfig>,
-    pub web_configs:    HashMap<String, ClientWebConfig>,
+    common: ClientCommonConfig,
+    pub tcp_configs: HashMap<String, ClientTcpConfig>,
+    pub web_configs: HashMap<String, ClientWebConfig>,
 }
 
 impl Config {
     pub fn new() -> Self {
-        let mut common: ClientCommonConfig = ClientCommonConfig::new(); 
+        let mut common: ClientCommonConfig = ClientCommonConfig::new();
         let mut tcp_configs: HashMap<String, ClientTcpConfig> = HashMap::new();
         let mut web_configs: HashMap<String, ClientWebConfig> = HashMap::new();
 
@@ -114,7 +114,7 @@ impl Config {
 
         Ok(())
     }
-    
+
     pub fn server_addr(&self) -> &str {
         &self.common.server_addr
     }
@@ -126,7 +126,7 @@ impl Config {
     pub fn auth_token(&self) -> &str {
         &self.common.token
     }
-    
+
     pub fn get_proxy(&self, proxy_name: &str) -> Result<Proxy> {
         if self.tcp_configs.contains_key(proxy_name) {
             let config = self.tcp_configs.get(proxy_name).unwrap();
@@ -134,15 +134,15 @@ impl Config {
             Ok(Proxy {
                 server_addr: config.local_ip.clone(),
                 server_port: config.local_port,
-                proxy_type:  "tcp".to_string(),
+                proxy_type: "tcp".to_string(),
             })
-        } else  if self.web_configs.contains_key(proxy_name) {
+        } else if self.web_configs.contains_key(proxy_name) {
             let config = self.web_configs.get(proxy_name).unwrap();
 
             Ok(Proxy {
                 server_addr: config.local_ip.clone(),
                 server_port: config.local_port,
-                proxy_type:  "web".to_string(),
+                proxy_type: "web".to_string(),
             })
         } else {
             Err(anyhow!("no such proxy"))
@@ -157,13 +157,15 @@ impl Config {
                 "auth_token" => self.common.token = v.to_string(),
                 "heartbeat_interval" => self.common.heartbeat_interval = v.parse::<u32>().unwrap(),
                 "heartbeat_timeout" => self.common.heartbeat_timeout = v.parse::<u32>().unwrap(),
-                "tcp_mux" => if v.eq(&"false".to_string()) { 
-                    self.common.tcp_mux = false
-                },
+                "tcp_mux" => {
+                    if v.eq(&"false".to_string()) {
+                        self.common.tcp_mux = false
+                    }
+                }
                 "pool_count" => self.common.pool_count = v.parse::<u32>().unwrap(),
                 _ => println!("dont support {}", k),
             }
-        };
+        }
 
         Ok(())
     }
@@ -186,7 +188,6 @@ impl Config {
             }
 
             self.tcp_configs.insert(name.to_string(), tcp_proxy_config);
-
         } else if stype.eq("http") || stype.eq("https") {
             let mut web_proxy_config = ClientWebConfig::new(stype.to_string());
 
@@ -205,8 +206,7 @@ impl Config {
         } else {
             println!("{} not support", stype);
         }
-        
+
         Ok(())
     }
-
 }

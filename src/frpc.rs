@@ -1,11 +1,10 @@
-
+use anyhow::Result;
 use clap::{Arg, ArgGroup, ArgMatches, Command, ErrorKind as ClapErrorKind};
 use log::{info, trace};
-use anyhow::Result;
 use std::process::ExitCode;
 
-use crate::service::Service;
 use crate::config::Config;
+use crate::service::Service;
 
 pub fn define_command_line_options(mut app: Command<'_>) -> Command<'_> {
     app = app.arg(
@@ -34,6 +33,6 @@ pub fn main(matches: &ArgMatches) -> ExitCode {
     client_config.load_config(config_file);
 
     start_service(client_config);
-    
+
     ExitCode::SUCCESS
 }

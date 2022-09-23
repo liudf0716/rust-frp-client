@@ -1,10 +1,9 @@
-
 pub mod config;
-pub mod service;
+pub mod control;
+pub mod crypto;
 pub mod frpc;
 pub mod msg;
-pub mod crypto;
-pub mod control;
+pub mod service;
 
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
 pub const FRP_VERSION: &str = "0.44.0";

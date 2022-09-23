@@ -1,33 +1,33 @@
-
 use anyhow::{Context, Result};
 use futures::{channel::mpsc, prelude::*};
+use std::process;
 use tokio::{net::TcpSocket, runtime::Runtime, task};
 use tokio_util::compat::TokioAsyncReadCompatExt;
-use yamux::{Config as YamuxConfig, Connection, Control, Stream, Mode, WindowUpdateMode};
-use std::process;
+use yamux::{Config as YamuxConfig, Connection, Control, Mode, Stream, WindowUpdateMode};
 
 use crate::{
     config::Config,
-    msg::{Login, LoginResp},
     control::Control as FrpControl,
+    msg::{Login, LoginResp},
 };
 
 #[derive(Debug, Clone)]
 pub struct Service {
-    pub main_ctl:       Control,
-    pub run_id:         String,
-    pub cfg:            Config,
+    pub main_ctl: Control,
+    pub run_id: String,
+    pub cfg: Config,
 }
 
 impl Service {
-    
     pub async fn new(cfg: Config) -> Result<Self> {
         let conn = {
             let mut yamux_cfg = YamuxConfig::default();
             yamux_cfg.set_split_send_size(crate::PAYLOAD_SIZE);
             yamux_cfg.set_window_update_mode(WindowUpdateMode::OnRead);
-        
-            let address = format!("{}:{}", cfg.server_addr(), cfg.server_port()).parse().unwrap();
+
+            let address = format!("{}:{}", cfg.server_addr(), cfg.server_port())
+                .parse()
+                .unwrap();
             let socket = TcpSocket::new_v4().expect("new_v4");
             let stream = socket.connect(address).await.expect("connect").compat();
             Connection::new(stream, yamux_cfg, Mode::Client)
@@ -58,7 +58,7 @@ impl Service {
         let mut iv = [0; 16];
         main_stream.read_exact(&mut iv).await?;
         println!("iv {:?}", iv);
-        
+
         let mut frp_ctl = FrpControl::new(self.clone(), iv);
         frp_ctl.run(&mut main_stream).await?;
 
@@ -69,4 +69,3 @@ impl Service {
         &self.cfg
     }
 }
-
