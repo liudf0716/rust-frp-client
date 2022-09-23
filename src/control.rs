@@ -7,6 +7,10 @@ use std::{
     str
 };
 use tokio::{net::TcpStream, time::timeout};
+use tokio::io::{self, AsyncRead, AsyncWrite};
+use tokio_util::compat::{FuturesAsyncReadCompatExt, FuturesAsyncWriteCompatExt};
+use futures::io::{AsyncRead as FAsyncRead, AsyncWrite as FAsyncWrite};
+use futures::stream::TryStreamExt;
 
 use crate::{
     crypto::FrpCoder,
@@ -96,9 +100,11 @@ impl Control {
             let start_work_conn: StartWorkConn = serde_json::from_str(&resp).unwrap();
             println!("start_work_conn {:?}", start_work_conn);
 
-            let proxy = conf.get_proxy(&start_work_conn.proxy_name).unwrap();
+            let prxy = conf.get_proxy(&start_work_conn.proxy_name).unwrap();
             let mut local_stream = 
-                TcpStream::connect(format!("{}:{}", proxy.server_addr, proxy.server_port)).await;
+                TcpStream::connect(format!("{}:{}", prxy.server_addr, prxy.server_port)).await;
+
+            proxy(local_stream.unwrap(), work_stream).await;
         });
 
         Ok(())
@@ -167,4 +173,20 @@ impl Control {
 
         Ok(())
     }
+}
+
+pub async fn proxy<S1, S2>(stream1: S1, stream2: S2) -> io::Result<()>
+where
+S1: AsyncRead + AsyncWrite + Unpin,
+S2: FAsyncRead + FAsyncWrite + Unpin,
+{
+    let (mut s1_read, mut s1_write) = io::split(stream1);
+    let (s2_read, s2_write) = stream2.split();
+    let mut s2_read = s2_read.compat();
+    let mut s2_write = s2_write.compat_write();
+    tokio::select! {
+        res = io::copy(&mut s1_read, &mut s2_write) => res,
+        res = io::copy(&mut s2_read, &mut s1_write) => res,
+    }?;
+    Ok(())
 }
